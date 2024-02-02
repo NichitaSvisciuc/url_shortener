@@ -1,0 +1,57 @@
+version: '3.0'
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: url_shortener_nginx
+    restart: unless-stopped
+    ports:
+      - 8000:80
+    volumes:
+      - ./docker/data/staticfiles:/var/www/html/static
+      - ./docker/data/media:/var/www/html/media
+      - ./docker/configs/nginx.conf:/etc/nginx/conf.d/default.conf
+    links:
+      - django
+    networks:
+      - url_shortener
+
+  postgres:
+    image: postgres:13
+    container_name: url_shortener_postgres
+    restart: unless-stopped
+    volumes:
+      - ./docker/data/postgres:/data/postgres
+    ports:
+      - 5432:5432
+    env_file:
+       - .env.docker
+    networks:
+      - url_shortener
+    logging:
+      driver: "json-file"
+      options:
+          max-size: "100m"
+
+  django:
+    container_name: url_shortener
+    restart: unless-stopped
+    build:
+      context: backend
+      dockerfile: Dockerfile
+    env_file:
+      - .env.docker
+    volumes:
+      - ./backend:/usr/src/app
+      - ./docker/data/media:/usr/src/app/media
+      - ./docker/data/staticfiles:/usr/src/app/staticfiles
+    working_dir: /usr/src/app
+    links:
+      - postgres
+    depends_on:
+      - postgres
+    networks:
+      - url_shortener
+
+networks:
+  url_shortener:
+    driver: bridge

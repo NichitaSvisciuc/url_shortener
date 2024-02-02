@@ -1,0 +1,4 @@
+djangorestframework==3.14.0
+Django==4.1
+drf-yasg==1.21.4
+psycopg2==2.9.5
